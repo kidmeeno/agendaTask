@@ -3,7 +3,9 @@ import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import "./App.css";
 import { useForm } from "react-hook-form";
+import Papa from "papaparse";
 import { ValidationText } from "./components/validationText/validationText";
+import { formatData } from "./utilityFxn";
 
 const agendaSchema = yup.object().shape({
   title: yup.string().required("Title is required"),
@@ -13,16 +15,8 @@ const agendaSchema = yup.object().shape({
 });
 
 function App() {
-  const [agenda, setAgenda] = useState([
-    {
-      title: "",
-      description: "",
-      status: "",
-      date: "",
-      createdAt: "",
-      updatedAt: "",
-    },
-  ]);
+  const [agenda, setAgenda] = useState([]);
+  const today = new Date().toLocaleDateString();
   const {
     register,
     handleSubmit,
@@ -30,8 +24,49 @@ function App() {
   } = useForm({
     resolver: yupResolver(agendaSchema),
   });
-  const onSubmit = () => {
-    console.log("we are really doing this now");
+  const onSubmit = (data) => {
+    let payload = [...agenda];
+    const dataToSave = {
+      title: data.title,
+      description: data.description,
+      status: data.status,
+      date: data.date,
+      createdAt: today,
+      updatedAt: "",
+    };
+    payload.push(dataToSave);
+    setAgenda(payload);
+  };
+
+  const handleFileUpload = (e) => {
+    const files = e.target.files;
+    if (files) {
+      Papa.parse(files[0], {
+        complete: function (results) {
+          setAgenda(formatData(results.data));
+        },
+      });
+    }
+  };
+
+  const deleteItem = (index) => {
+    let data = [...agenda];
+    data.splice(index, 1);
+    console.log(data, "love is all we have");
+    setAgenda(data);
+  };
+
+  const downloadCsvFile = () => {
+    var csv = Papa.unparse(agenda);
+    const outputFilename = `results.csv`;
+    // file file actions.
+    const url = URL.createObjectURL(new Blob([csv]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", outputFilename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -46,9 +81,7 @@ function App() {
             onSubmit={handleSubmit(onSubmit)}
           >
             <div className="col-md-12">
-              <label className="form-label">
-                Title
-              </label>
+              <label className="form-label">Title</label>
               <input
                 type="text"
                 className="form-control"
@@ -63,9 +96,7 @@ function App() {
               )}
             </div>
             <div className="col-md-6">
-              <label className="form-label">
-                Date
-              </label>
+              <label className="form-label">Date</label>
               <input
                 type="date"
                 className="form-control"
@@ -80,10 +111,12 @@ function App() {
               )}
             </div>
             <div className="col-md-6">
-              <label className="form-label">
-                Status
-              </label>
-              <select className="form-select" id="status" {...register("status")}>
+              <label className="form-label">Status</label>
+              <select
+                className="form-select"
+                id="status"
+                {...register("status")}
+              >
                 <option value="">Choose...</option>
                 <option value={"Active"}>Active</option>
                 <option value={"Deactivate"}>Deactivate</option>
@@ -96,9 +129,7 @@ function App() {
               )}
             </div>
             <div className="col-md-12">
-              <label className="form-label">
-                Description
-              </label>
+              <label className="form-label">Description</label>
               <textarea
                 // type="date"
                 className="form-control"
@@ -122,10 +153,13 @@ function App() {
         <div className="col-md-8">
           <div className="row">
             <div className="col-md-4">
-              <label className="form-label">
-                Upload CSV
-              </label>
-              <input className="form-control" type={"file"} />
+              <label className="form-label">Upload CSV</label>
+              <input
+                className="form-control"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleFileUpload}
+                type={"file"}
+              />
             </div>
           </div>
           <table className="table">
@@ -142,9 +176,12 @@ function App() {
               </tr>
             </thead>
             <tbody>
+              {agenda.length === 0 && (
+                <p className="text-center">Please add agenda</p>
+              )}
               {agenda.map((x, i) => (
                 <tr key={i}>
-                  <th scope="row">1</th>
+                  <th scope="row">{i + 1}</th>
                   <td>{x.title}</td>
                   <td>{x.description}</td>
                   <td>{x.status}</td>
@@ -152,13 +189,29 @@ function App() {
                   <td>{x.createdAt}</td>
                   <td>{x.updatedAt}</td>
                   <td>
-                    <button>Delete</button>
+                    <button
+                      onClick={() => {
+                        deleteItem(i);
+                      }}
+                    >
+                      Delete
+                    </button>
+                    <button>Edit</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <button>Download file</button>
+          <div className="d-flex justify-content-between align-items-center">
+            <button onClick={downloadCsvFile}>Download file</button>
+            <button
+              onClick={() => {
+                setAgenda([]);
+              }}
+            >
+              Delete all
+            </button>
+          </div>
         </div>
       </div>
     </div>

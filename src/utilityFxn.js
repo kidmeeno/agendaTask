@@ -1,3 +1,5 @@
+import Papa from "papaparse";
+
 export const formatData = (data) => {
   const keys = data[0];
   let i = 0;
@@ -5,7 +7,6 @@ export const formatData = (data) => {
   let result;
   while (i < data.length) {
     if (i !== 0) {
-        console.log(i, "is what here");
       const values = data[i];
       result = Object.assign.apply(
         {},
@@ -16,4 +17,17 @@ export const formatData = (data) => {
     i++;
   }
   return dataToReturn;
+};
+
+export const downloadCsvFile = (agenda) => {
+  var csv = Papa.unparse(agenda);
+  const outputFilename = `results.csv`;
+  // file file actions.
+  const url = URL.createObjectURL(new Blob([csv]));
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", outputFilename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };

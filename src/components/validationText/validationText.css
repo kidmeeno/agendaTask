@@ -1,0 +1,21 @@
+.rse-valid-text {
+	margin-bottom: 10px;
+}
+
+.rse-valid-text p {
+	font-style: normal;
+	font-weight: 450;
+	font-size: 12px;
+	line-height: 16px;
+	margin-left: 6.55px;
+	margin: 0;
+	margin-left: 5px;
+}
+
+.rse-error {
+	color: #de350b;
+}
+
+.rse-success {
+	color: var(--secondary);
+}
